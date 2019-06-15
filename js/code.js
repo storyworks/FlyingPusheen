@@ -22,7 +22,7 @@ var Colors = {
   waveBlue: 0x3763cc,
   waveLightBlue: 0x3788cc,
   grey: 0xb2b2b2,
-  darkgrey: 0x515151,
+  darkgrey: 0x5a7291,
   blue: 0xa3cffe,
   yellow: 0xfeda79,
   coral: 0xfe99b7,
@@ -330,7 +330,7 @@ Pusheen.prototype.updateHairs = function() {
     h3.scale.y = 0.75 + Math.cos(this.angleHairs + i / 8) * 0.25;
   }
   // increment the angle for the next frame
-  this.angleHairs += 0.12;
+  this.angleHairs += 0.05;
 };
 
 //TAIL
@@ -443,7 +443,7 @@ Tail.prototype.updateHairs = function() {
     h3.scale.y = 0.6 + Math.cos(this.angleHairs + i / 8) * 0.25;
   }
   // increment the angle for the next frame
-  this.angleHairs += 0.12;
+  this.angleHairs += 0.05;
 };
 
 //BODY
@@ -675,7 +675,7 @@ Sea = function() {
       // a random distance
       amp: 5 + Math.random() * 15,
       // a random speed between 0.016 and 0.048 radians / frame
-      speed: 0.016 + Math.random() * 0.032,
+      speed: 0.015 + Math.random() * 0.024,
     });
   }
 
@@ -722,7 +722,7 @@ Sea.prototype.moveWaves = function() {
     vprops.ang += vprops.speed;
   }
   this.mesh.geometry.verticesNeedUpdate = true;
-  sea.mesh.rotation.z += 0.005;
+  sea.mesh.rotation.z += 0.003;
 };
 
 //CLOUD
@@ -733,32 +733,32 @@ Cloud = function() {
 
   // create a cube geometry;
   // this shape will be duplicated to create the cloud
-  var geom = new THREE.CubeGeometry(20, 20, 20);
+  var geom = new THREE.SphereGeometry(10, 8, 8);
 
   // create a material; a simple white material will do the trick
   var mat = new THREE.MeshPhongMaterial({
     color: Colors.white,
   });
 
-  // duplicate the geometry a random number of times
-  var nBlocs = 3 + Math.floor(Math.random() * 3);
+  // nBlocs - number of spheres for clouds, increase when cloudy
+  var nBlocs = 25 + Math.floor(Math.random() * 1.5);
   for (var i = 0; i < nBlocs; i++) {
     // create the mesh by cloning the geometry
     var m = new THREE.Mesh(geom.clone(), mat);
 
     // set the position and the rotation of each cube randomly
-    m.position.x = i * 15;
-    m.position.y = Math.random() * 10;
-    m.position.z = Math.random() * 10;
+    m.position.x = i * 2;
+    m.position.y = Math.random() * 25;
+    m.position.z = Math.random() * 5;
     m.rotation.z = Math.random() * Math.PI * 2;
     m.rotation.y = Math.random() * Math.PI * 2;
 
     // set the size of the cube randomly
-    var s = 0.1 + Math.random() * 0.9;
+    var s = 0.5 + Math.random() * 1.1;
     m.scale.set(s, s, s);
 
     // allow each cube to cast and to receive shadows
-    m.castShadow = false;
+    m.castShadow = true;
     m.receiveShadow = true;
 
     // add the cube to the container we first created
@@ -791,7 +791,8 @@ function createSea() {
 // push the sky's center a bit towards the bottom of the screen
 function createSky() {
   sky = new Sky();
-  sky.mesh.position.y = -600;
+  sky.mesh.position.y = -550;
+  sky.mesh.position.z = 10;
   scene.add(sky.mesh);
 }
 
@@ -804,7 +805,7 @@ function loop() {
   sea.moveWaves();
 
   // Rotate the the sea and the sky
-  sky.mesh.rotation.z += 0.01;
+  sky.mesh.rotation.z += 0.005;
   renderer.render(scene, camera);
 
   // call the loop function again
@@ -842,11 +843,34 @@ function normalize(v, vmin, vmax, tmin, tmax) {
   return tv;
 }
 
+function addStars() {
+  //This will add a starfield to the background of a scene
+  var starsGeometry = new THREE.Geometry();
+
+  for (var i = 0; i < 10000; i++) {
+    var star = new THREE.Vector3();
+    star.x = THREE.Math.randFloatSpread(3000);
+    star.y = THREE.Math.randFloatSpread(3000);
+    star.z = THREE.Math.randFloatSpread(1000);
+
+    starsGeometry.vertices.push(star);
+  }
+
+  var starsMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+  var starField = new THREE.Points(starsGeometry, starsMaterial);
+  starField.position.z = -600;
+
+  scene.add(starField);
+}
+
 function init(event) {
   document.addEventListener('mousemove', handleMouseMove, false);
   document.getElementById('gameHolder').style.background = getSkyColour();
   createScene();
   createLights();
+  if (timeOfDay === 'night') {
+    addStars();
+  }
   createPusheen();
   createSea();
   createSky();
